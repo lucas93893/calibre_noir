@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Searcher de calibre_noir</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #050505;
+      }
+
+      main {
+        width: 100vw;
+        min-height: 100vh;
+        box-sizing: border-box;
+        background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
+        border-radius: 0;
+        padding: 1.2rem 1.3rem 1.6rem;
+        box-shadow: none;
+        border: none;
+      }
+
+      h1 {
+        margin: 0;
+        text-align: center;
+        color: #ffffff;
+        letter-spacing: 0.4px;
+        font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+      }
+
+      .subtitle {
+        margin: 0.45rem 0 1rem;
+        text-align: center;
+        color: #d1d5db;
+        font-size: 0.92rem;
+      }
+
+      .nav {
+        display: flex;
+        justify-content: center;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+      }
+
+      .nav button {
+        border: 1px solid #4b5563;
+        border-radius: 999px;
+        padding: 0.65rem 1.2rem;
+        background: linear-gradient(180deg, #1a2130, #111827);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      }
+
+      .nav button.active {
+        background: linear-gradient(180deg, #991b1b, #7f1d1d);
+        border-color: #f87171;
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.18);
+      }
+
+      #btn-chercher {
+        margin-top: 1rem;
+      }
+
+      button {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #4b5563;
+        border-radius: 999px;
+        padding: 0.8rem 1.5rem;
+        background: linear-gradient(180deg, #1f2937, #111827);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+
+      button:hover {
+        background: linear-gradient(180deg, #374151, #1f2937);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      .panel {
+        margin-top: 1rem;
+        display: none;
+        background: linear-gradient(180deg, #0c0c0c, #141414);
+        border: 1px solid #2f2f2f;
+        border-radius: 16px;
+        padding: 1rem;
+      }
+
+      .panel.visible {
+        display: block;
+      }
+
+      #formulaire {
+        margin-top: 1rem;
+        display: none;
+      }
+
+      #formulaire.visible {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+
+      .bulle {
+        background: #161616;
+        border-radius: 999px;
+        padding: 0.8rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        border: 1px solid #4b4b4b;
+      }
+
+      .bulle label {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        color: #ffffff;
+      }
+
+      .bulle input {
+        border: none;
+        background: transparent;
+        width: 100%;
+        outline: none;
+        font-size: 0.95rem;
+        color: #ffffff;
+      }
+
+      .bulle:focus-within {
+        border-color: #f87171;
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15);
+      }
+
+      .zone-fichiers {
+        margin-top: 1.2rem;
+        border: 2px dashed #666666;
+        border-radius: 16px;
+        padding: 1rem;
+        color: #ffffff;
+        text-align: center;
+      }
+
+      .zone-fichiers.active {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.8rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .actions button,
+      .actions label {
+        border: 1px solid #4b5563;
+        border-radius: 999px;
+        padding: 0.65rem 1.2rem;
+        background: linear-gradient(180deg, #263041, #1f2937);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .actions label {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      #pick-folder,
+      #pick-files,
+      #pick-files-persist {
+        display: none;
+      }
+
+      .meta,
+      .resultats,
+      .admin-note {
+        margin-top: 1rem;
+        color: #ffffff;
+      }
+
+      .meta {
+        background: #0b0b0b;
+        border: 1px solid #353535;
+        border-radius: 10px;
+        padding: 0.7rem 0.8rem;
+        font-size: 0.9rem;
+      }
+
+      .resultats {
+        background: #0a0a0a;
+        border: 1px solid #3f3f3f;
+        border-radius: 12px;
+        padding: 1rem;
+      }
+
+      .resultats ul {
+        margin: 0.8rem 0 0;
+        padding-left: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      .result-card {
+        border: 1px solid #505050;
+        border-radius: 12px;
+        background: #111111;
+        overflow: hidden;
+      }
+
+      .result-summary {
+        cursor: pointer;
+        padding: 0.7rem;
+        font-size: 0.85rem;
+        color: #f3f4f6;
+        background: #171717;
+      }
+
+      .result-card[open] .result-summary {
+        border-bottom: 1px solid #3f3f3f;
+      }
+
+      .result-body {
+        padding: 0.7rem;
+      }
+
+
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.4rem 0.8rem;
+      }
+
+      .result-item {
+        font-size: 0.86rem;
+      }
+
+      .result-item strong {
+        color: #f9a8d4;
+      }
+
+      .result-line {
+        margin-top: 0.5rem;
+        font-size: 0.78rem;
+        color: #9ca3af;
+        word-break: break-word;
+      }
+
+      .admin-lock {
+        margin-top: 1rem;
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .admin-lock-input {
+        max-width: 300px;
+        width: 100%;
+        margin: 0 auto;
+        border: 1px solid #555;
+        border-radius: 999px;
+        padding: 0.7rem 1rem;
+        background: #101010;
+        color: #ffffff;
+        outline: none;
+      }
+
+      .admin-msg {
+        text-align: center;
+        color: #fca5a5;
+        min-height: 1.1rem;
+      }
+
+      .admin-content {
+        display: none;
+      }
+
+      .admin-content.visible {
+        display: block;
+      }
+
+
+      .section-title {
+        margin: 0.4rem 0 0.8rem;
+        color: #ffffff;
+        font-size: 1rem;
+        text-align: center;
+      }
+
+      .saved-files-wrap {
+        margin-top: 0.8rem;
+      }
+
+      .saved-files-list {
+        margin-top: 0.6rem;
+        border: 1px solid #3f3f3f;
+        border-radius: 12px;
+        background: #0f0f0f;
+        padding: 0.7rem;
+        color: #e5e7eb;
+        max-height: 220px;
+        overflow: auto;
+      }
+
+      .saved-files-list strong {
+        color: #fca5a5;
+      }
+
+      .saved-files-list ul {
+        margin: 0;
+        padding-left: 1rem;
+      }
+
+      .saved-files-list li {
+        margin: 0.2rem 0;
+        font-size: 0.85rem;
+        word-break: break-word;
+      }
+
+      .emoji {
+        margin-right: 0.3rem;
+      }
+
+      .credits {
+        margin-top: 1.3rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6rem;
+      }
+
+      @media (max-width: 720px) {
+        main {
+          padding: 1rem 0.8rem 1.3rem;
+          border-radius: 0;
+        }
+
+        .actions {
+          gap: 0.55rem;
+        }
+
+        .actions button,
+        .actions label,
+        button {
+          width: 100%;
+          justify-content: center;
+          text-align: center;
+        }
+      }
+
+      .credit-bulle {
+        background: #1a1a1a;
+        color: #ffffff;
+        border: 1px solid #555555;
+        border-radius: 999px;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>searcher de calibre_noir</h1>
+      <p class="subtitle">Recherche disponible immédiatement avec les dossiers déjà sauvegardés</p>
+
+      <div class="nav" aria-label="Navigation">
+        <button id="tab-user" class="active" type="button">🔎 Recherche</button>
+        <button id="tab-admin" type="button">🛡️ Admin</button>
+      </div>
+
+      <section id="panel-user" class="panel visible" aria-label="Espace recherche">
+        <button id="btn-chercher" type="button">🔍 chercher une personne</button>
+
+        <p class="section-title">👤 Informations personne</p>
+        <section id="formulaire" aria-label="Informations personne">
+          <div class="bulle">
+            <label for="prenom">prenom</label>
+            <input id="prenom" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="nom">nom</label>
+            <input id="nom" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="date-naissance">date de naissance</label>
+            <input id="date-naissance" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="ville">ville</label>
+            <input id="ville" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="adresse">adresse</label>
+            <input id="adresse" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="numero">numero</label>
+            <input id="numero" type="text" />
+          </div>
+          <div class="bulle">
+            <label for="code-postal">code postal</label>
+            <input id="code-postal" type="text" />
+          </div>
+        </section>
+
+        <div class="actions">
+          <button id="btn-analyser" type="button">🚀 Lancer la recherche</button>
+        </div>
+
+        <section class="resultats" id="resultats">
+          <strong>📄 Correspondances :</strong>
+          <ul id="liste-resultats"></ul>
+        </section>
+      </section>
+
+      <section id="panel-admin" class="panel" aria-label="Espace admin">
+        <p class="admin-note">Espace protégé : entre le code pour accéder à l'import dossier/fichiers.</p>
+
+        <div id="admin-lock" class="admin-lock">
+          <input id="admin-code" class="admin-lock-input" type="password" placeholder="Code admin" />
+          <button id="btn-unlock-admin" type="button">🔐 Accéder à l'espace admin</button>
+          <div id="admin-msg" class="admin-msg"></div>
+        </div>
+
+        <div id="admin-content" class="admin-content">
+          <p class="section-title">🗂️ Import des dossiers</p>
+          <section class="zone-fichiers" id="zone-fichiers">
+            <strong>📂 Glisse un dossier/fichiers ici</strong>
+            <p>ou utilise les boutons ci-dessous. Fichiers acceptés : .csv, .sql, .txt et autres formats disponibles. Stockage côté site : illimité.</p>
+          </section>
+
+          <div class="actions">
+            <label for="pick-folder">📁 Choisir un dossier</label>
+            <input id="pick-folder" type="file" webkitdirectory directory multiple />
+            <label for="pick-files">🧾 Choisir des fichiers</label>
+            <input id="pick-files" type="file" multiple />
+            <input id="pick-files-persist" type="file" multiple />
+            <button id="btn-persist-folder" type="button">💾 Ajouter dossier sauvegardé</button>
+            <button id="btn-persist-files" type="button">💾 Ajouter fichiers sauvegardés</button>
+            <button id="btn-show-saved-files" type="button">📦 fichiers installé</button>
+          </div>
+
+          <div class="saved-files-wrap">
+            <div id="saved-files-list" class="saved-files-list" hidden>
+              <strong>Fichiers sauvegardés :</strong>
+              <ul id="saved-files-ul"></ul>
+            </div>
+          </div>
+
+          <p class="meta" id="meta">Aucun fichier chargé.</p>
+        </div>
+      </section>
+
+      <div class="credits" aria-label="Crédits">
+        <span class="credit-bulle">fais a la main</span>
+        <span class="credit-bulle">réalisé par calibre_noir</span>
+        <span class="credit-bulle">UHQ</span>
+      </div>
+    </main>
+
+    <script>
+      const tabUser = document.getElementById('tab-user');
+      const tabAdmin = document.getElementById('tab-admin');
+      const panelUser = document.getElementById('panel-user');
+      const panelAdmin = document.getElementById('panel-admin');
+
+      const bouton = document.getElementById('btn-chercher');
+      const formulaire = document.getElementById('formulaire');
+      const btnAnalyser = document.getElementById('btn-analyser');
+      const listeResultats = document.getElementById('liste-resultats');
+
+      const adminCodeInput = document.getElementById('admin-code');
+      const btnUnlockAdmin = document.getElementById('btn-unlock-admin');
+      const adminMsg = document.getElementById('admin-msg');
+      const adminContent = document.getElementById('admin-content');
+      const zoneFichiers = document.getElementById('zone-fichiers');
+            const pickFolder = document.getElementById('pick-folder');
+      const pickFiles = document.getElementById('pick-files');
+                  const pickFilesPersist = document.getElementById('pick-files-persist');
+      const btnPersistFolder = document.getElementById('btn-persist-folder');
+      const btnPersistFiles = document.getElementById('btn-persist-files');
+      const btnShowSavedFiles = document.getElementById('btn-show-saved-files');
+      const savedFilesList = document.getElementById('saved-files-list');
+      const savedFilesUl = document.getElementById('saved-files-ul');
+      const meta = document.getElementById('meta');
+
+      const ADMIN_CODE = 'ghost';
+      let adminUnlocked = false;
+
+      const fichiersCharges = [];
+      const extensionsTexte = ['.txt', '.csv', '.json', '.log', '.md'];
+      const MIN_SUPPORTED_KO = 200000;
+      const CHUNK_SIZE = 1024 * 1024;
+      const MAX_MATCHES = 1000;
+      const DB_NAME = 'calibre_noir_admin';
+      const DB_STORE = 'settings';
+      const DB_KEY_FOLDERS = 'savedDirectoryHandles';
+      const DB_KEY_FILES = 'savedFilesData';
+
+      const normaliser = (texte) => (texte || '').toString().trim().toLowerCase();
+      const formaterDateNaissance = (valeur) => {
+        if (!valeur) return '—';
+
+        const texte = valeur.toString().trim();
+        const match = texte.match(/(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})/);
+        if (match) {
+          return `${match[1]}/${match[2]}/${match[3]}`;
+        }
+
+        return texte;
+      };
+
+
+      const extraireInfosDepuisLigne = (ligne) => {
+        const infos = {
+          prenom: '',
+          nom: '',
+          dateNaissance: '',
+          ville: '',
+          adresse: '',
+          numero: '',
+          codePostal: '',
+        };
+
+        const patterns = [
+          { key: 'prenom', aliases: ['prenom', 'prénom'] },
+          { key: 'nom', aliases: ['nom'] },
+          { key: 'dateNaissance', aliases: ['date de naissance', 'date-naissance', 'date naissance', 'naissance', 'ddn'] },
+          { key: 'ville', aliases: ['ville'] },
+          { key: 'numero', aliases: ['numero', 'numéro', 'telephone', 'téléphone', 'phone', 'tel'] },
+          { key: 'codePostal', aliases: ['code postal', 'code-postal', 'cp', 'postal'] },
+        ];
+
+        for (const item of patterns) {
+          for (const alias of item.aliases) {
+            const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const reg = new RegExp(`${escaped}\\s*[:=]\\s*([^,;|]+)`, 'i');
+            const match = ligne.match(reg);
+            if (match && match[1]) {
+              infos[item.key] = match[1].trim();
+              break;
+            }
+          }
+        }
+
+        const adresseLibre = ligne.match(
+          /\b\d{1,4}\s+(?:bis\s+|ter\s+)?(?:rue|avenue|av\.?|boulevard|bd\.?|chemin|impasse|all[ée]e|route|place|quai|faubourg)\s+[^,;|]+/i
+        );
+        if (adresseLibre && adresseLibre[0]) {
+          infos.adresse = adresseLibre[0].trim();
+        }
+
+        return infos;
+      };
+
+      const creerCarteResultat = (match, rechercheActuelle) => {
+        const infos = extraireInfosDepuisLigne(match.texte);
+        const li = document.createElement('li');
+        const card = document.createElement('details');
+        card.className = 'result-card';
+
+        const summary = document.createElement('summary');
+        summary.className = 'result-summary';
+        summary.textContent = `📍 ${match.fichier} — ligne ${match.numeroLigne}`;
+
+        const body = document.createElement('div');
+        body.className = 'result-body';
+        const prenomAffiche = infos.prenom || rechercheActuelle.prenom || '—';
+        const nomAffiche = infos.nom || rechercheActuelle.nom || '—';
+        const villeAffiche = infos.ville || rechercheActuelle.ville || '—';
+        const adresseAffiche = infos.adresse || rechercheActuelle.adresse || '—';
+        const numeroAffiche = infos.numero || rechercheActuelle.numero || '—';
+        const codePostalAffiche = infos.codePostal || rechercheActuelle.codePostal || '—';
+        const dateAffichee = formaterDateNaissance(infos.dateNaissance || rechercheActuelle.dateNaissance || '');
+
+        body.innerHTML = `
+          <div class="result-grid">
+            <div class="result-item"><strong>prenom :</strong> ${prenomAffiche}</div>
+            <div class="result-item"><strong>nom :</strong> ${nomAffiche}</div>
+            <div class="result-item"><strong>date de naissance :</strong> ${dateAffichee}</div>
+            <div class="result-item"><strong>ville :</strong> ${villeAffiche}</div>
+            <div class="result-item"><strong>adresse :</strong> ${adresseAffiche}</div>
+            <div class="result-item"><strong>numero :</strong> ${numeroAffiche}</div>
+            <div class="result-item"><strong>code postal :</strong> ${codePostalAffiche}</div>
+          </div>
+          <div class="result-line">ligne source : ${match.texte}</div>
+        `;
+
+        card.appendChild(summary);
+        card.appendChild(body);
+        li.appendChild(card);
+
+        return li;
+      };
+
+      const afficherPanel = (nom) => {
+        const userActif = nom === 'user';
+        panelUser.classList.toggle('visible', userActif);
+        panelAdmin.classList.toggle('visible', !userActif);
+        tabUser.classList.toggle('active', userActif);
+        tabAdmin.classList.toggle('active', !userActif);
+      };
+
+            const openDb = () =>
+        new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(DB_STORE)) {
+              db.createObjectStore(DB_STORE);
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+
+      const saveDirectoryHandle = async (handle) => {
+        const db = await openDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, 'readwrite');
+          const store = tx.objectStore(DB_STORE);
+          const req = store.get(DB_KEY_FOLDERS);
+
+          req.onsuccess = () => {
+            const existants = Array.isArray(req.result) ? req.result : [];
+            const signatures = new Set(existants.map((entry) => `${entry.name}:${entry.kind}`));
+            const signature = `${handle.name}:${handle.kind}`;
+
+            if (!signatures.has(signature)) {
+              existants.push(handle);
+            }
+
+            store.put(existants, DB_KEY_FOLDERS);
+          };
+
+          req.onerror = () => reject(req.error);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      };
+
+      const readDirectoryHandles = async () => {
+        const db = await openDb();
+        const handles = await new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, 'readonly');
+          const req = tx.objectStore(DB_STORE).get(DB_KEY_FOLDERS);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        db.close();
+        return handles;
+      };
+
+      const saveFilesData = async (files) => {
+        const db = await openDb();
+        const nouvellesEntrees = await Promise.all(
+          Array.from(files).map(async (file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: file.lastModified,
+            webkitRelativePath: file.webkitRelativePath || '',
+            blob: file,
+          }))
+        );
+
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, 'readwrite');
+          const store = tx.objectStore(DB_STORE);
+          const req = store.get(DB_KEY_FILES);
+
+          req.onsuccess = () => {
+            const existants = Array.isArray(req.result) ? req.result : [];
+            const signatures = new Set(
+              existants.map((entry) => `${entry.name}:${entry.size}:${entry.lastModified}:${entry.webkitRelativePath || ''}`)
+            );
+
+            const fusion = [...existants];
+            for (const entry of nouvellesEntrees) {
+              const signature = `${entry.name}:${entry.size}:${entry.lastModified}:${entry.webkitRelativePath || ''}`;
+              if (!signatures.has(signature)) {
+                fusion.push(entry);
+                signatures.add(signature);
+              }
+            }
+
+            store.put(fusion, DB_KEY_FILES);
+          };
+
+          req.onerror = () => reject(req.error);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      };
+
+      const readFilesData = async () => {
+        const db = await openDb();
+        const data = await new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, 'readonly');
+          const req = tx.objectStore(DB_STORE).get(DB_KEY_FILES);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        db.close();
+        return data;
+      };
+
+      const afficherListeFichiersSauvegardes = async () => {
+        try {
+          const data = await readFilesData();
+          savedFilesUl.innerHTML = '';
+
+          if (!data.length) {
+            const li = document.createElement('li');
+            li.textContent = 'Aucun fichier sauvegardé pour le moment.';
+            savedFilesUl.appendChild(li);
+          } else {
+            data.forEach((entry) => {
+              const li = document.createElement('li');
+              const tailleKo = Math.max(1, Math.round((entry.size || 0) / 1024));
+              const chemin = entry.webkitRelativePath || entry.name;
+              li.textContent = `${chemin} (${tailleKo.toLocaleString('fr-FR')} Ko)`;
+              savedFilesUl.appendChild(li);
+            });
+          }
+
+          savedFilesList.hidden = false;
+        } catch (error) {
+          meta.textContent = 'Impossible d’afficher la liste des fichiers sauvegardés.';
+        }
+      };
+
+      const lireFichiersDepuisHandle = async (dirHandle, prefix = '') => {
+        const files = [];
+
+        for await (const [name, handle] of dirHandle.entries()) {
+          const fullPath = prefix ? `${prefix}/${name}` : name;
+
+          if (handle.kind === 'file') {
+            const file = await handle.getFile();
+            Object.defineProperty(file, 'webkitRelativePath', {
+              value: fullPath,
+              configurable: true,
+            });
+            files.push(file);
+          } else if (handle.kind === 'directory') {
+            const nestedFiles = await lireFichiersDepuisHandle(handle, fullPath);
+            files.push(...nestedFiles);
+          }
+        }
+
+        return files;
+      };
+
+      const lireFichiersDepuisData = (filesData) =>
+        filesData.map((entry) => {
+          const file = new File([entry.blob], entry.name, {
+            type: entry.type || 'application/octet-stream',
+            lastModified: entry.lastModified || Date.now(),
+          });
+
+          if (entry.webkitRelativePath) {
+            Object.defineProperty(file, 'webkitRelativePath', {
+              value: entry.webkitRelativePath,
+              configurable: true,
+            });
+          }
+
+          return file;
+        });
+
+      const chargerFichiersSauvegardes = async () => {
+        try {
+          const filesData = await readFilesData();
+          if (!filesData.length) return;
+
+          const files = lireFichiersDepuisData(filesData);
+          ajouterFichiers(files);
+          meta.textContent = `Fichiers sauvegardés rechargés ✅ (${files.length} fichiers).`;
+        } catch (error) {
+          meta.textContent = 'Impossible de recharger les fichiers sauvegardés.';
+        }
+      };
+
+      const chargerDossierSauvegarde = async () => {
+        try {
+          if (!('showDirectoryPicker' in window)) {
+            return;
+          }
+
+          const savedHandles = await readDirectoryHandles();
+          if (!savedHandles.length) return;
+
+          let totalFolders = 0;
+          let totalFiles = 0;
+
+          for (const handle of savedHandles) {
+            const permission = await handle.queryPermission({ mode: 'read' });
+            if (permission !== 'granted') {
+              continue;
+            }
+
+            totalFolders += 1;
+            const files = await lireFichiersDepuisHandle(handle);
+            totalFiles += files.length;
+            ajouterFichiers(files);
+          }
+
+          if (!totalFolders) {
+            meta.textContent = 'Dossiers sauvegardés détectés. Clique sur 💾 pour réautoriser.';
+            return;
+          }
+
+          meta.textContent = `Dossiers sauvegardés rechargés ✅ (${totalFolders} dossier(s), ${totalFiles} fichiers lus).`;
+        } catch (error) {
+          meta.textContent = 'Impossible de recharger les dossiers sauvegardés.';
+        }
+      };
+
+      const ajouterFichiers = (liste) => {
+        const fichiers = Array.from(liste);
+        const signatures = new Set(fichiersCharges.map((f) => `${f.name}:${f.size}:${f.lastModified}`));
+
+        for (const fichier of fichiers) {
+          const signature = `${fichier.name}:${fichier.size}:${fichier.lastModified}`;
+          if (!signatures.has(signature)) {
+            fichiersCharges.push(fichier);
+            signatures.add(signature);
+          }
+        }
+
+        const totalOctets = fichiersCharges.reduce((acc, fichier) => acc + fichier.size, 0);
+        const totalKo = Math.round(totalOctets / 1024);
+
+        meta.textContent = fichiersCharges.length
+          ? `${fichiersCharges.length} fichier(s) chargé(s) - ${totalKo.toLocaleString('fr-FR')} Ko (mode illimité).`
+          : 'Aucun fichier chargé.';
+      };
+
+      const lireChunkTexte = (blob) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result?.toString() || '');
+          reader.onerror = () => resolve('');
+          reader.readAsText(blob);
+        });
+
+      const chercherDansFichier = async (fichier, valeurs, matches) => {
+        let offset = 0;
+        let buffer = '';
+        let numeroLigne = 0;
+
+        while (offset < fichier.size) {
+          const chunk = fichier.slice(offset, offset + CHUNK_SIZE);
+          const texteChunk = await lireChunkTexte(chunk);
+          buffer += texteChunk;
+
+          const lignes = buffer.split(/\r?\n/);
+          buffer = lignes.pop() || '';
+
+          for (const ligne of lignes) {
+            numeroLigne += 1;
+            const ligneNorm = normaliser(ligne);
+            if (!ligneNorm) continue;
+
+            const ok = valeurs.every((mot) => ligneNorm.includes(mot));
+            if (ok) {
+              matches.push({
+                fichier: fichier.webkitRelativePath || fichier.name,
+                numeroLigne,
+                texte: ligne,
+              });
+
+              if (matches.length >= MAX_MATCHES) {
+                return true;
+              }
+            }
+          }
+
+          offset += CHUNK_SIZE;
+        }
+
+        if (buffer.trim()) {
+          numeroLigne += 1;
+          const ligneNorm = normaliser(buffer);
+          const ok = valeurs.every((mot) => ligneNorm.includes(mot));
+          if (ok) {
+            matches.push({
+              fichier: fichier.webkitRelativePath || fichier.name,
+              numeroLigne,
+              texte: buffer,
+            });
+            if (matches.length >= MAX_MATCHES) return true;
+          }
+        }
+
+        return false;
+      };
+
+      const unlockAdmin = () => {
+        if (adminCodeInput.value === ADMIN_CODE) {
+          adminUnlocked = true;
+          adminMsg.textContent = `Accès validé ✅ (support gros fichiers + sauvegarde locale des fichiers)`;
+          adminContent.classList.add('visible');
+          adminCodeInput.value = '';
+          chargerDossierSauvegarde();
+          chargerFichiersSauvegardes();
+          return;
+        }
+
+        adminMsg.textContent = 'Code incorrect.';
+      };
+
+      tabUser.addEventListener('click', () => afficherPanel('user'));
+      tabAdmin.addEventListener('click', () => afficherPanel('admin'));
+
+      btnUnlockAdmin.addEventListener('click', unlockAdmin);
+      adminCodeInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          unlockAdmin();
+        }
+      });
+
+      bouton.addEventListener('click', () => {
+        formulaire.classList.toggle('visible');
+      });
+
+      zoneFichiers.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        zoneFichiers.classList.add('active');
+      });
+
+      zoneFichiers.addEventListener('dragleave', () => {
+        zoneFichiers.classList.remove('active');
+      });
+
+      zoneFichiers.addEventListener('drop', (event) => {
+        event.preventDefault();
+        zoneFichiers.classList.remove('active');
+        ajouterFichiers(event.dataTransfer.files);
+      });
+
+      pickFolder.addEventListener('change', (event) => {
+        ajouterFichiers(event.target.files);
+      });
+
+      pickFiles.addEventListener('change', (event) => {
+        ajouterFichiers(event.target.files);
+      });
+
+      pickFilesPersist.addEventListener('change', async (event) => {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+
+        try {
+          await saveFilesData(files);
+          ajouterFichiers(files);
+          meta.textContent = `Fichiers ajoutés à la sauvegarde permanente ✅ (+${files.length} fichiers).`;
+          if (!savedFilesList.hidden) {
+            await afficherListeFichiersSauvegardes();
+          }
+        } catch (error) {
+          meta.textContent = 'Erreur pendant la sauvegarde permanente des fichiers.';
+        }
+      });
+
+      btnPersistFiles.addEventListener('click', () => {
+        if (!adminUnlocked) {
+          meta.textContent = 'Accès admin requis pour sauvegarder des fichiers.';
+          return;
+        }
+
+        pickFilesPersist.value = '';
+        pickFilesPersist.click();
+      });
+
+      btnShowSavedFiles.addEventListener('click', async () => {
+        if (!adminUnlocked) {
+          meta.textContent = 'Accès admin requis pour voir les fichiers sauvegardés.';
+          return;
+        }
+
+        if (!savedFilesList.hidden) {
+          savedFilesList.hidden = true;
+          return;
+        }
+
+        await afficherListeFichiersSauvegardes();
+      });
+
+      btnPersistFolder.addEventListener('click', async () => {
+        try {
+          if (!('showDirectoryPicker' in window)) {
+            meta.textContent = 'Sélection persistante non supportée sur ce navigateur.';
+            return;
+          }
+
+          const handle = await window.showDirectoryPicker();
+          const permission = await handle.requestPermission({ mode: 'read' });
+          if (permission !== 'granted') {
+            meta.textContent = 'Permission refusée pour le dossier.';
+            return;
+          }
+
+          await saveDirectoryHandle(handle);
+          const files = await lireFichiersDepuisHandle(handle);
+          ajouterFichiers(files);
+          meta.textContent = `Dossier ajouté à la sauvegarde ✅ (${files.length} fichiers chargés).`;
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          meta.textContent = 'Erreur pendant la sauvegarde du dossier.';
+        }
+      });
+
+      const chargerSourcesSauvegardeesAuDemarrage = async () => {
+        await chargerDossierSauvegarde();
+        await chargerFichiersSauvegardes();
+      };
+
+      chargerSourcesSauvegardeesAuDemarrage();
+
+      btnAnalyser.addEventListener('click', async () => {
+        listeResultats.innerHTML = '';
+
+        if (!fichiersCharges.length) {
+          listeResultats.innerHTML = '<li>Aucun dossier/fichier disponible pour la recherche.</li>';
+          return;
+        }
+
+        const rechercheActuelle = {
+          prenom: normaliser(document.getElementById('prenom').value),
+          nom: normaliser(document.getElementById('nom').value),
+          dateNaissance: normaliser(document.getElementById('date-naissance').value),
+          ville: normaliser(document.getElementById('ville').value),
+          adresse: normaliser(document.getElementById('adresse').value),
+          numero: normaliser(document.getElementById('numero').value),
+          codePostal: normaliser(document.getElementById('code-postal').value),
+        };
+
+        const valeurs = Object.values(rechercheActuelle).filter(Boolean);
+
+        if (!valeurs.length) {
+          listeResultats.innerHTML = '<li>Entre au moins une information à rechercher.</li>';
+          return;
+        }
+
+        const matches = [];
+
+        for (const fichier of fichiersCharges) {
+          meta.textContent = `Analyse de : ${fichier.webkitRelativePath || fichier.name}`;
+          const limiteAtteinte = await chercherDansFichier(fichier, valeurs, matches);
+          if (limiteAtteinte) {
+            break;
+          }
+        }
+
+        if (!matches.length) {
+          listeResultats.innerHTML = '<li>Aucune correspondance trouvée.</li>';
+          return;
+        }
+
+        matches.forEach((match) => {
+          const carte = creerCarteResultat(match, rechercheActuelle);
+          listeResultats.appendChild(carte);
+        });
+
+        meta.textContent = `${matches.length} correspondance(s) trouvée(s).`;
+        if (matches.length >= MAX_MATCHES) {
+          const li = document.createElement('li');
+          li.textContent = `Affichage limité à ${MAX_MATCHES} résultats pour garder de bonnes performances.`;
+          listeResultats.appendChild(li);
+        }
+      });
+    </script>
+  </body>
+</html>
